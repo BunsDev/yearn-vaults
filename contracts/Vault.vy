@@ -152,11 +152,12 @@ PERMIT_TYPE_HASH: constant(bytes32) = keccak256("Permit(address owner,address sp
 
 @external
 def initialize(
-    _token: address,
-    _governance: address,
-    _name: String[64],
-    _symbol: String[32],
-    _guardian: address = msg.sender,
+    token: address,
+    governance: address,
+    rewards: address,
+    name: String[64],
+    symbol: String[32],
+    guardian: address = msg.sender,
 ):
     """
     @notice
@@ -165,20 +166,21 @@ def initialize(
         The performance fee is set to 10% of yield, per Strategy.
         The management fee is set to 2%, per year.
         There is no initial deposit limit.
-    @param _token The token that may be deposited into this Vault.
-    @param _governance The address authorized for governance interactions.
-    @param _name Specify a custom Vault name. Leave empty for default choice.
-    @param _symbol Specify a custom Vault symbol name. Leave empty for default choice.
-    @param _guardian The address authorized for guardian interactions. Defaults to caller.
+    @param token The token that may be deposited into this Vault.
+    @param governance The address authorized for governance interactions.
+    @param rewards The address to use for collecting rewards.
+    @param name Specify a custom Vault name. Leave empty for default choice.
+    @param symbol Specify a custom Vault symbol name. Leave empty for default choice.
+    @param guardian The address authorized for guardian interactions. Defaults to caller.
     """
-    assert self.token == ERC20(ZERO_ADDRESS)  # NOTE: Ensures this can only be called once
-    self.token = ERC20(_token)
-    self.name = _name
-    self.symbol = _symbol
-    self.decimals = DetailedERC20(_token).decimals()
-    self.governance = _governance
-    self.rewards = _governance  # Can re-configure later
-    self.guardian = _guardian
+    assert self.activation == 0  # dev: no devops199
+    self.token = ERC20(token)
+    self.name = name
+    self.symbol = symbol
+    self.decimals = DetailedERC20(token).decimals()
+    self.governance = governance
+    self.rewards = rewards
+    self.guardian = guardian
     self.performanceFee = 1000  # 10% of yield (per Strategy)
     self.managementFee = 200  # 2% per year
     self.depositLimit = MAX_UINT256  # Start unlimited
