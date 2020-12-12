@@ -12,7 +12,10 @@ PACKAGE_VERSION = yaml.safe_load(
 
 def test_vault_deployment(guardian, gov, rewards, token, Vault):
     # Deploy the Vault without any name/symbol overrides
-    vault = guardian.deploy(Vault, token, gov, rewards, "", "")
+    vault = guardian.deploy(Vault)
+    vault.initialize(
+        token, gov, rewards, token.symbol() + " yVault", "yv" + token.symbol(), guardian
+    )
     # Addresses
     assert vault.governance() == gov
     assert vault.guardian() == guardian
@@ -35,7 +38,8 @@ def test_vault_deployment(guardian, gov, rewards, token, Vault):
 
 def test_vault_name_symbol_override(guardian, gov, rewards, token, Vault):
     # Deploy the Vault with name/symbol overrides
-    vault = guardian.deploy(Vault, token, gov, rewards, "crvY yVault", "yvcrvY")
+    vault = guardian.deploy(Vault)
+    vault.initialize(token, gov, rewards, "crvY yVault", "yvcrvY", guardian)
     # Assert that the overrides worked
     assert vault.name() == "crvY yVault"
     assert vault.symbol() == "yvcrvY"
