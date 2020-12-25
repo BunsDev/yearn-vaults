@@ -125,7 +125,7 @@ event UpdateGuestList:
 
 
 event UpdateRewards:
-    rewards: address # New active rewards recipient 
+    rewards: address # New active rewards recipient
 
 
 event UpdateDepositLimit:
@@ -1035,8 +1035,8 @@ def addStrategy(
 
     assert msg.sender == self.governance
     assert self.strategies[strategy].activation == 0
-    assert self == Strategy(strategy).vault() 
-    assert self.token.address == Strategy(strategy).want() 
+    assert self == Strategy(strategy).vault()
+    assert self.token.address == Strategy(strategy).want()
     self.strategies[strategy] = StrategyParams({
         performanceFee: performanceFee,
         activation: block.timestamp,
@@ -1117,6 +1117,13 @@ def updateStrategyPerformanceFee(
     log StrategyUpdatePerformanceFee(strategy, performanceFee)
 
 
+@internal
+def _revokeStrategy(strategy: address):
+    self.debtLimit -= self.strategies[strategy].debtLimit
+    self.strategies[strategy].debtLimit = 0
+    log StrategyRevoked(strategy)
+
+
 @external
 def migrateStrategy(oldVersion: address, newVersion: address):
     """
@@ -1140,7 +1147,7 @@ def migrateStrategy(oldVersion: address, newVersion: address):
     assert self.strategies[newVersion].activation == 0
 
     strategy: StrategyParams = self.strategies[oldVersion]
-    self.strategies[oldVersion] = empty(StrategyParams)
+    self._revokeStrategy(oldVersion)
     self.strategies[newVersion] = strategy
 
     Strategy(oldVersion).migrate(newVersion)
@@ -1175,9 +1182,7 @@ def revokeStrategy(strategy: address = msg.sender):
     @param strategy The Strategy to revoke.
     """
     assert msg.sender in [strategy, self.governance, self.guardian]
-    self.debtLimit -= self.strategies[strategy].debtLimit
-    self.strategies[strategy].debtLimit = 0
-    log StrategyRevoked(strategy)
+    self._revokeStrategy(strategy)
 
 
 @external
